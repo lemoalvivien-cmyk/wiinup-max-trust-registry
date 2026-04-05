@@ -14,8 +14,8 @@ const variantStyles = {
   outlined: "bg-card rounded-xl border border-border",
 };
 
-const TitanCard: React.FC<TitanCardProps> = ({ variant = "default", padding = "p-6", className, children }) => (
-  <div className={cn(variantStyles[variant], padding, className)}>
+const TitanCard: React.FC<TitanCardProps> = ({ variant = "default", padding = "p-6", className, children, ...props }) => (
+  <div className={cn(variantStyles[variant], padding, className)} {...props}>
     {children}
   </div>
 );
