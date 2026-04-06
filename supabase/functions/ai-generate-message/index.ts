@@ -19,16 +19,22 @@ serve(async (req) => {
   try {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
     );
 
-    const authHeader = req.headers.get("Authorization")!;
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) throw new Error("Not authenticated");
     const token = authHeader.replace("Bearer ", "");
     const { data: { user } } = await supabase.auth.getUser(token);
     if (!user) throw new Error("Not authenticated");
 
-    const { prospect_id } = await req.json();
-    if (!prospect_id) throw new Error("prospect_id required");
+    const body = await req.json();
+    const prospect_id = body?.prospect_id;
+    if (!prospect_id || typeof prospect_id !== "string") throw new Error("prospect_id required (uuid string)");
+    // Basic UUID validation
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(prospect_id)) {
+      throw new Error("Invalid prospect_id format");
+    }
 
     const { data: prospect } = await supabase
       .from("ai_prospects")
@@ -40,10 +46,12 @@ serve(async (req) => {
 
     const signalText = SIGNALS[prospect.signal_type || ""] || "votre activité récente";
 
-    // V1: template-based message
-    const message = `Bonjour ${prospect.contact_name || ""},
+    const contactName = (prospect.contact_name || "").replace(/<[^>]*>/g, "").slice(0, 100);
+    const companyName = (prospect.company_name || "").replace(/<[^>]*>/g, "").slice(0, 200);
 
-Suite à ${signalText} chez ${prospect.company_name}, je me permets de vous contacter car nos services pourraient accompagner votre développement.
+    const message = `Bonjour ${contactName},
+
+Suite à ${signalText} chez ${companyName}, je me permets de vous contacter car nos services pourraient accompagner votre développement.
 
 Notre plateforme WIINUP MAX connecte les entreprises avec des facilitateurs qualifiés dans votre secteur, garantissant des introductions traçables et des deals prouvés.
 
@@ -51,7 +59,6 @@ Seriez-vous disponible pour un échange de 15 minutes cette semaine ?
 
 Cordialement`;
 
-    // Update prospect status
     await supabase
       .from("ai_prospects")
       .update({ suggested_message: message, status: "validated" })

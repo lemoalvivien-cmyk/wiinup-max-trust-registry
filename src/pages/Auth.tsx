@@ -38,7 +38,8 @@ const Auth = () => {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate("/dashboard");
+        const redirectTo = searchParams.get("redirect") || "/dashboard";
+        navigate(redirectTo);
       }
     } catch (error: any) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });

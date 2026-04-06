@@ -12,3 +12,14 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /account
+Disallow: /pipeline
+Disallow: /besoins
+Disallow: /introductions
+Disallow: /facilitateur
+Disallow: /ia-prospection
+Disallow: /onboarding
+
+Sitemap: https://wiinup.fr/sitemap.xml

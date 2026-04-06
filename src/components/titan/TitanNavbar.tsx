@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, FileText, GitBranch, Users, Cpu, User, Menu, X, LogOut } from "lucide-react";
+import { LayoutDashboard, FileText, GitBranch, Users, Cpu, User, Menu, X, LogOut, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TitanNavbarProps {
@@ -14,6 +14,7 @@ const allLinks = [
   { path: "/pipeline", label: "Pipeline", icon: GitBranch, roles: ["entreprise", "facilitateur", "admin"] },
   { path: "/facilitateur", label: "Hub Facilitateur", icon: Users, roles: ["facilitateur", "admin"] },
   { path: "/ia-prospection", label: "IA Prospection", icon: Cpu, roles: ["entreprise", "admin"] },
+  { path: "/admin", label: "Admin", icon: Shield, roles: ["admin"] },
   { path: "/account", label: "Mon Compte", icon: User, roles: ["entreprise", "facilitateur", "admin"] },
 ];
 
