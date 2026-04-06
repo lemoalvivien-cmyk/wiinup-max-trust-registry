@@ -70,7 +70,7 @@ const Landing = () => {
             Le registre de confiance transactionnelle B2B. Chaque deal est prouvé, tracé et rémunéré. Fini les introductions oubliées.
           </motion.p>
           <motion.div initial="hidden" animate="visible" custom={2} variants={fadeUp} className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/auth?role=entreprise"><TitanButton size="lg" icon={<Zap className="h-5 w-5" />}>Démarrer à 99 €/an</TitanButton></Link>
+            <TitanButton size="lg" icon={<Zap className="h-5 w-5" />} loading={checkoutLoading} onClick={handleCheckout}>Démarrer à 99 €/an</TitanButton>
             <Link to="/auth?role=facilitateur"><TitanButton variant="ghost" size="lg">Devenir facilitateur — c'est gratuit</TitanButton></Link>
           </motion.div>
         </div>
