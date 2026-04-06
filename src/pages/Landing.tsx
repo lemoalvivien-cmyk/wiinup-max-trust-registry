@@ -40,6 +40,19 @@ const Landing = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="WIINUP MAX — Registre de confiance B2B | Apport d'affaires tracé"
+        description="Publiez un besoin, l'IA trouve vos prospects, vos facilitateurs vous connectent. Recommandation B2B prouvée, tracée et rémunérée. 99 €/an."
+        canonical="https://wiinup.fr/"
+      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "WIINUP MAX",
+        "url": "https://wiinup.fr",
+        "description": "Registre de confiance transactionnelle B2B",
+        "offers": { "@type": "Offer", "price": "99", "priceCurrency": "EUR", "description": "Abonnement annuel Starter" }
+      })}} />
       {/* Topbar */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-md border-b border-border">
         <div className="max-w-6xl mx-auto flex items-center justify-between px-4 py-3">
