@@ -41,14 +41,14 @@ const Landing = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
-        title="WIINUP MAX — Registre de confiance B2B | Apport d'affaires tracé"
+        title="WIINUP — Registre de confiance B2B | Apport d'affaires tracé"
         description="Publiez un besoin, l'IA trouve vos prospects, vos facilitateurs vous connectent. Recommandation B2B prouvée, tracée et rémunérée. 99 €/an."
         canonical="https://wiinup.fr/"
       />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         "@context": "https://schema.org",
         "@type": "Organization",
-        "name": "WIINUP MAX",
+        "name": "WIINUP",
         "url": "https://wiinup.fr",
         "description": "Registre de confiance transactionnelle B2B",
         "offers": { "@type": "Offer", "price": "99", "priceCurrency": "EUR", "description": "Abonnement annuel Starter" }
@@ -60,7 +60,7 @@ const Landing = () => {
             <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
               <span className="text-accent-foreground font-bold text-sm">W</span>
             </div>
-            <span className="text-lg font-bold text-foreground">WIINUP MAX</span>
+            <span className="text-lg font-bold text-foreground">WIINUP</span>
           </Link>
           <div className="flex items-center gap-3">
             <Link to="/auth"><TitanButton variant="ghost" size="sm">Connexion</TitanButton></Link>
@@ -147,13 +147,13 @@ const Landing = () => {
       <section className="py-20 px-4 bg-muted/50">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-black text-center text-foreground mb-12">
-            Pourquoi WIINUP MAX ?
+            Pourquoi WIINUP ?
           </h2>
           <div className="grid md:grid-cols-3 gap-4">
             {[
               { name: "Traditionnel", items: ["0 traçabilité", "0 preuve", "0 suivi", "Confiance aveugle"], highlight: false },
-              { name: "Wimmov", items: ["179 €/mois", "Pas d'IA", "Preuves limitées", "Interface datée"], highlight: false },
-              { name: "WIINUP MAX", items: ["99 €/AN", "IA intégrée", "Preuves juridiques", "Pipeline complet"], highlight: true },
+              { name: "Concurrent A", items: ["179 €/mois", "Pas d'IA", "Preuves limitées", "Interface datée"], highlight: false },
+              { name: "WIINUP", items: ["99 €/AN", "IA intégrée", "Preuves juridiques", "Pipeline complet"], highlight: true },
             ].map((col, i) => (
               <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp}>
                 <TitanCard variant={col.highlight ? "elevated" : "outlined"}
@@ -187,7 +187,7 @@ const Landing = () => {
       <section className="py-20 px-4">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-black text-center text-foreground mb-12">
-            Ils ont déjà adopté WIINUP MAX
+            Ils ont déjà adopté WIINUP
           </h2>
           <div className="grid md:grid-cols-3 gap-6 mb-12">
             {[
