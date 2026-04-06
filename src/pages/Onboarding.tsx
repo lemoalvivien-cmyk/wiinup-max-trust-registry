@@ -5,6 +5,9 @@ import TitanInput from "@/components/titan/TitanInput";
 import TitanSelect from "@/components/titan/TitanSelect";
 import TitanCard from "@/components/titan/TitanCard";
 import { Check } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 const sectors = [
   { value: "", label: "Sélectionnez un secteur" },
@@ -20,7 +23,9 @@ const sectors = [
 
 const Onboarding = () => {
   const [step, setStep] = useState(1);
-  const [role] = useState<"entreprise" | "facilitateur">("entreprise");
+  const { user, profile } = useAuth();
+  const { toast } = useToast();
+  const role = profile?.role || "entreprise";
   const [companyName, setCompanyName] = useState("");
   const [siren, setSiren] = useState("");
   const [sector, setSector] = useState("");
@@ -28,17 +33,60 @@ const Onboarding = () => {
   const [besoinTitle, setBesoinTitle] = useState("");
   const [besoinDesc, setBesoinDesc] = useState("");
   const [besoinSector, setBesoinSector] = useState("");
+  const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
 
   const totalSteps = 3;
 
-  const handleFinish = () => {
+  const handleNext = async () => {
+    if (step === 1 && user) {
+      setSaving(true);
+      await supabase.from("profiles").update({
+        company_name: companyName || null,
+        siren: siren || null,
+        sector: sector || null,
+        city: city || null,
+      }).eq("id", user.id);
+      setSaving(false);
+    }
+
+    if (step === 2 && role === "entreprise" && user && besoinTitle && besoinDesc && besoinSector) {
+      setSaving(true);
+      const { error } = await supabase.from("besoins").insert({
+        entreprise_id: user.id,
+        title: besoinTitle.slice(0, 120),
+        description: besoinDesc.slice(0, 500),
+        sector_target: besoinSector,
+      });
+      if (error) {
+        toast({ title: "Erreur", description: error.message, variant: "destructive" });
+        setSaving(false);
+        return;
+      }
+      setSaving(false);
+    }
+
+    if (step === 2 && role === "facilitateur" && user) {
+      setSaving(true);
+      await supabase.from("profiles").update({
+        sector: sector || null,
+        city: city || null,
+      }).eq("id", user.id);
+      setSaving(false);
+    }
+
+    setStep(step + 1);
+  };
+
+  const handleFinish = async () => {
+    if (user) {
+      await supabase.from("profiles").update({ onboarding_completed: true }).eq("id", user.id);
+    }
     navigate("/dashboard");
   };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Progress bar */}
       <div className="w-full bg-muted h-1">
         <div className="h-full bg-accent transition-all duration-300" style={{ width: `${(step / totalSteps) * 100}%` }} />
       </div>
@@ -104,7 +152,7 @@ const Onboarding = () => {
 
           <div className="flex gap-3">
             {step > 1 && <TitanButton variant="ghost" onClick={() => setStep(step - 1)}>Précédent</TitanButton>}
-            <TitanButton className="flex-1" onClick={step < totalSteps ? () => setStep(step + 1) : handleFinish}>
+            <TitanButton className="flex-1" loading={saving} onClick={step < totalSteps ? handleNext : handleFinish}>
               {step < totalSteps ? "Suivant" : "Accéder au Dashboard"}
             </TitanButton>
           </div>

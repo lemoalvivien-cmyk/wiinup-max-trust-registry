@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import TitanNavbar from "@/components/titan/TitanNavbar";
 import TitanCard from "@/components/titan/TitanCard";
@@ -7,22 +7,20 @@ import TitanButton from "@/components/titan/TitanButton";
 import TitanModal from "@/components/titan/TitanModal";
 import TitanInput from "@/components/titan/TitanInput";
 import TitanSelect from "@/components/titan/TitanSelect";
-import { Plus, Filter } from "lucide-react";
+import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 const sectors = [
-  { value: "", label: "Tous les secteurs" },
   { value: "immobilier", label: "Immobilier" },
   { value: "assurance", label: "Assurance" },
   { value: "finance", label: "Finance" },
   { value: "tech", label: "Tech / IT" },
   { value: "conseil", label: "Conseil" },
-];
-
-const mockBesoins = [
-  { id: "1", title: "Recherche partenaire distribution B2B", description: "Nous cherchons un partenaire pour distribuer nos solutions SaaS...", sector_target: "tech", status: "active", intro_count: 5 },
-  { id: "2", title: "Courtier assurance entreprise", description: "Besoin d'un courtier spécialisé pour notre flotte...", sector_target: "assurance", status: "active", intro_count: 3 },
-  { id: "3", title: "Agent immobilier locaux professionnels", description: "Recherche d'un local de 200m² en zone...", sector_target: "immobilier", status: "paused", intro_count: 1 },
+  { value: "btp", label: "BTP" },
+  { value: "sante", label: "Santé" },
+  { value: "autre", label: "Autre" },
 ];
 
 const statusConfig: Record<string, { label: string; variant: "success" | "warning" | "danger" }> = {
@@ -34,13 +32,51 @@ const statusConfig: Record<string, { label: string; variant: "success" | "warnin
 const Besoins = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState("");
+  const [besoins, setBesoins] = useState<any[]>([]);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [sectorTarget, setSectorTarget] = useState("");
+  const [saving, setSaving] = useState(false);
+  const { user, profile } = useAuth();
+  const { toast } = useToast();
   const navigate = useNavigate();
 
-  const filtered = mockBesoins.filter((b) => !filterStatus || b.status === filterStatus);
+  const fetchBesoins = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("besoins")
+      .select("*")
+      .order("created_at", { ascending: false });
+    setBesoins(data || []);
+  };
+
+  useEffect(() => { fetchBesoins(); }, [user]);
+
+  const handleCreate = async () => {
+    if (!user || !title || !description || !sectorTarget) return;
+    setSaving(true);
+    const { error } = await supabase.from("besoins").insert({
+      entreprise_id: user.id,
+      title: title.slice(0, 120),
+      description: description.slice(0, 500),
+      sector_target: sectorTarget,
+    });
+    if (error) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Besoin publié !" });
+      setModalOpen(false);
+      setTitle(""); setDescription(""); setSectorTarget("");
+      fetchBesoins();
+    }
+    setSaving(false);
+  };
+
+  const filtered = besoins.filter((b) => !filterStatus || b.status === filterStatus);
 
   return (
     <div className="min-h-screen bg-background">
-      <TitanNavbar userRole="entreprise" onLogout={async () => { await supabase.auth.signOut(); navigate("/"); }} />
+      <TitanNavbar userRole={profile?.role as any || "entreprise"} onLogout={async () => { await supabase.auth.signOut(); navigate("/"); }} />
       <main className="lg:pl-60 pt-14 lg:pt-0">
         <div className="p-6 max-w-6xl mx-auto space-y-6">
           <div className="flex items-center justify-between">
@@ -53,7 +89,6 @@ const Besoins = () => {
             </TitanButton>
           </div>
 
-          {/* Filters */}
           <div className="flex gap-2">
             {["", "active", "paused", "closed"].map((s) => (
               <button key={s} onClick={() => setFilterStatus(s)}
@@ -63,7 +98,6 @@ const Besoins = () => {
             ))}
           </div>
 
-          {/* List */}
           <div className="space-y-4">
             {filtered.map((b) => (
               <TitanCard key={b.id} variant="outlined" className="cursor-pointer hover:titan-shadow-md transition-shadow">
@@ -71,30 +105,38 @@ const Besoins = () => {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-bold text-foreground">{b.title}</h3>
-                      <TitanBadge variant={statusConfig[b.status]?.variant}>{statusConfig[b.status]?.label}</TitanBadge>
+                      <TitanBadge variant={statusConfig[b.status]?.variant || "info"}>{statusConfig[b.status]?.label || b.status}</TitanBadge>
+                      {b.is_phantom && <TitanBadge variant="info">Généré par IA</TitanBadge>}
                     </div>
                     <p className="text-sm text-muted-foreground line-clamp-2">{b.description}</p>
-                    <div className="flex items-center gap-4 mt-3">
-                      <span className="text-xs text-muted-foreground">Secteur : {b.sector_target}</span>
-                      <span className="text-xs text-muted-foreground">{b.intro_count} introductions</span>
-                    </div>
+                    <span className="text-xs text-muted-foreground mt-2 block">Secteur : {b.sector_target}</span>
                   </div>
                 </div>
               </TitanCard>
             ))}
+            {filtered.length === 0 && (
+              <TitanCard variant="outlined" className="text-center py-8">
+                <p className="text-muted-foreground">Aucun besoin. Créez votre premier besoin pour recevoir des introductions.</p>
+              </TitanCard>
+            )}
           </div>
 
-          {/* Modal */}
           <TitanModal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Nouveau Besoin">
             <div className="space-y-4">
-              <TitanInput label="Titre (120 caractères max)" placeholder="Décrivez votre besoin en une phrase" />
+              <TitanInput label="Titre (120 caractères max)" value={title}
+                onChange={(e) => setTitle(e.target.value.slice(0, 120))}
+                placeholder="Décrivez votre besoin en une phrase" />
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-foreground">Description (500 caractères max)</label>
                 <textarea className="w-full rounded-lg border border-input bg-card px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring min-h-[100px]"
+                  value={description} onChange={(e) => setDescription(e.target.value.slice(0, 500))}
                   placeholder="L'IA structurera votre demande automatiquement..." />
+                <p className="text-xs text-muted-foreground text-right">{description.length}/500</p>
               </div>
-              <TitanSelect label="Secteur cible" options={sectors.filter((s) => s.value)} />
-              <TitanButton className="w-full">Publier le besoin</TitanButton>
+              <TitanSelect label="Secteur cible" options={sectors} value={sectorTarget} onChange={(e) => setSectorTarget(e.target.value)} />
+              <TitanButton className="w-full" loading={saving} onClick={handleCreate} disabled={!title || !description || !sectorTarget}>
+                Publier le besoin
+              </TitanButton>
             </div>
           </TitanModal>
         </div>

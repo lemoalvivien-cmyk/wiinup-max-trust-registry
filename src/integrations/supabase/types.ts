@@ -422,6 +422,7 @@ export type Database = {
           onboarding_completed: boolean | null
           phone: string | null
           qr_code_token: string | null
+          referred_by: string | null
           reputation_score: number | null
           role: string
           sector: string | null
@@ -441,6 +442,7 @@ export type Database = {
           onboarding_completed?: boolean | null
           phone?: string | null
           qr_code_token?: string | null
+          referred_by?: string | null
           reputation_score?: number | null
           role: string
           sector?: string | null
@@ -460,6 +462,7 @@ export type Database = {
           onboarding_completed?: boolean | null
           phone?: string | null
           qr_code_token?: string | null
+          referred_by?: string | null
           reputation_score?: number | null
           role?: string
           sector?: string | null
@@ -468,6 +471,41 @@ export type Database = {
           subscription_plan?: string | null
           subscription_status?: string | null
           updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stripe_webhook_logs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          event_id: string
+          event_type: string
+          id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          event_id: string
+          event_type: string
+          id?: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          event_id?: string
+          event_type?: string
+          id?: string
+          status?: string
         }
         Relationships: []
       }

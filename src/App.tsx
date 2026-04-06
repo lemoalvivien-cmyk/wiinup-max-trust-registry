@@ -13,6 +13,8 @@ import IntroductionDetail from "./pages/IntroductionDetail";
 import HubFacilitateur from "./pages/HubFacilitateur";
 import IAProspection from "./pages/IAProspection";
 import Account from "./pages/Account";
+import Pricing from "./pages/Pricing";
+import Join from "./pages/Join";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +36,8 @@ const App = () => (
           <Route path="/facilitateur" element={<HubFacilitateur />} />
           <Route path="/ia-prospection" element={<IAProspection />} />
           <Route path="/account" element={<Account />} />
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/join" element={<Join />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
