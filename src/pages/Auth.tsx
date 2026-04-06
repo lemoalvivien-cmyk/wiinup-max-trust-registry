@@ -11,7 +11,9 @@ import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
-  const [mode, setMode] = useState<"login" | "register">(searchParams.get("mode") === "login" ? "login" : "register");
+  const [mode, setMode] = useState<"login" | "register">(
+    searchParams.get("mode") === "login" ? "login" : "register"
+  );
   const [role, setRole] = useState<"entreprise" | "facilitateur">(
     (searchParams.get("role") as "entreprise" | "facilitateur") || "entreprise"
   );
@@ -38,25 +40,44 @@ const Auth = () => {
         if (error) throw error;
 
         if (role === "entreprise") {
-          // Entreprise → Stripe checkout via hook
+          const accessToken = signUpData?.session?.access_token;
+          if (!accessToken) {
+            toast({
+              title: "Email de confirmation envoyé",
+              description:
+                "Vérifiez votre boîte mail, confirmez votre compte, puis connectez-vous pour finaliser le paiement.",
+            });
+            setLoading(false);
+            return;
+          }
           await redirectToCheckout({
             priceId: "price_1TISUWEG497aCUFxCf50zKPZ",
             email,
+            accessToken,
           });
           return;
         } else {
-          // Facilitateur → gratuit, accès direct au dashboard
-          toast({ title: "Bienvenue !", description: "Votre compte facilitateur est prêt." });
+          toast({
+            title: "Bienvenue !",
+            description: "Votre compte facilitateur est prêt.",
+          });
           navigate("/dashboard");
         }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
         if (error) throw error;
         const redirectTo = searchParams.get("redirect") || "/dashboard";
         navigate(redirectTo);
       }
     } catch (error: any) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -77,12 +98,24 @@ const Auth = () => {
         <div className="w-full max-w-md space-y-6">
           {/* Tabs */}
           <div className="flex bg-muted rounded-lg p-1">
-            <button onClick={() => setMode("login")}
-              className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${mode === "login" ? "bg-card text-foreground titan-shadow-sm" : "text-muted-foreground"}`}>
+            <button
+              onClick={() => setMode("login")}
+              className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
+                mode === "login"
+                  ? "bg-card text-foreground titan-shadow-sm"
+                  : "text-muted-foreground"
+              }`}
+            >
               Connexion
             </button>
-            <button onClick={() => setMode("register")}
-              className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${mode === "register" ? "bg-card text-foreground titan-shadow-sm" : "text-muted-foreground"}`}>
+            <button
+              onClick={() => setMode("register")}
+              className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
+                mode === "register"
+                  ? "bg-card text-foreground titan-shadow-sm"
+                  : "text-muted-foreground"
+              }`}
+            >
               Inscription
             </button>
           </div>
@@ -92,7 +125,9 @@ const Auth = () => {
             <div className="grid grid-cols-2 gap-3">
               <TitanCard
                 variant={role === "entreprise" ? "elevated" : "outlined"}
-                className={`cursor-pointer text-center transition-all ${role === "entreprise" ? "ring-2 ring-accent" : ""}`}
+                className={`cursor-pointer text-center transition-all ${
+                  role === "entreprise" ? "ring-2 ring-accent" : ""
+                }`}
                 padding="p-4"
               >
                 <div onClick={() => setRole("entreprise")}>
@@ -103,7 +138,9 @@ const Auth = () => {
               </TitanCard>
               <TitanCard
                 variant={role === "facilitateur" ? "elevated" : "outlined"}
-                className={`cursor-pointer text-center transition-all ${role === "facilitateur" ? "ring-2 ring-accent" : ""}`}
+                className={`cursor-pointer text-center transition-all ${
+                  role === "facilitateur" ? "ring-2 ring-accent" : ""
+                }`}
                 padding="p-4"
               >
                 <div onClick={() => setRole("facilitateur")}>
@@ -116,12 +153,28 @@ const Auth = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <TitanInput label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-              placeholder="votre@email.com" icon={<Mail className="h-4 w-4" />} required />
-            <TitanInput label="Mot de passe" type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••" icon={<Lock className="h-4 w-4" />} required />
+            <TitanInput
+              label="Email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="votre@email.com"
+              icon={<Mail className="h-4 w-4" />}
+              required
+            />
+            <TitanInput
+              label="Mot de passe"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              icon={<Lock className="h-4 w-4" />}
+              required
+            />
             <TitanButton type="submit" loading={loading} className="w-full">
-              {mode === "login" ? "Se connecter" : `S'inscrire${role === "entreprise" ? " — 99 €/an" : " — Gratuit"}`}
+              {mode === "login"
+                ? "Se connecter"
+                : `S'inscrire${role === "entreprise" ? " — 99 €/an" : " — Gratuit"}`}
             </TitanButton>
           </form>
         </div>
