@@ -25,7 +25,7 @@ const Auth = () => {
     setLoading(true);
     try {
       if (mode === "register") {
-        const { error } = await supabase.auth.signUp({
+        const { data: signUpData, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -34,7 +34,41 @@ const Auth = () => {
           },
         });
         if (error) throw error;
-        toast({ title: "Inscription réussie", description: "Vérifiez votre email pour confirmer votre compte." });
+
+        if (role === "entreprise") {
+          // Appel checkout Stripe externe pour les entreprises
+          const session = signUpData.session;
+          const checkoutBody = {
+            priceId: "price_1TISUWEG497aCUFxCf50zKPZ",
+            successUrl: window.location.origin + "/dashboard",
+            cancelUrl: window.location.origin + "/auth",
+          };
+          const res = await fetch(
+            "https://rnkkktytsxxtzaigafuc.supabase.co/functions/v1/create-checkout-session",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                ...(session?.access_token
+                  ? { Authorization: `Bearer ${session.access_token}` }
+                  : {}),
+              },
+              body: JSON.stringify(checkoutBody),
+            }
+          );
+          const result = await res.json();
+          if (result?.url) {
+            window.location.href = result.url;
+            return;
+          } else {
+            toast({ title: "Inscription réussie", description: "Redirection vers le paiement impossible. Rendez-vous sur /pricing.", variant: "destructive" });
+            navigate("/pricing");
+          }
+        } else {
+          // Facilitateur → gratuit, accès direct au dashboard
+          toast({ title: "Bienvenue !", description: "Votre compte facilitateur est prêt." });
+          navigate("/dashboard");
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
