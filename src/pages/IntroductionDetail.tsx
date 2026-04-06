@@ -8,7 +8,7 @@ import TitanButton from "@/components/titan/TitanButton";
 import TitanInput from "@/components/titan/TitanInput";
 import TitanSelect from "@/components/titan/TitanSelect";
 import TitanProofUpload from "@/components/titan/TitanProofUpload";
-import { FileCheck, CheckSquare } from "lucide-react";
+import { FileCheck, CheckSquare, Shield, AlertTriangle, Hash } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -30,10 +30,19 @@ const rejectionReasons = [
   { value: "other", label: "Autre" },
 ];
 
-const levelConfig: Record<string, { variant: "success" | "warning" | "danger" }> = {
-  forte: { variant: "success" },
-  moyenne: { variant: "warning" },
-  faible: { variant: "danger" },
+/* CDC §7 — Moteur de Preuves Hiérarchisé (4 niveaux) */
+const levelConfig: Record<string, { variant: "success" | "warning" | "danger" | "info"; label: string; points: number }> = {
+  forte: { variant: "success", label: "Forte", points: 40 },
+  moyenne: { variant: "warning", label: "Moyenne", points: 20 },
+  faible: { variant: "danger", label: "Faible", points: 5 },
+  suspecte: { variant: "info", label: "⚠ Suspecte", points: -30 },
+};
+
+/* CDC §7 — Seuils décisionnels */
+const getScoreLabel = (score: number): { label: string; variant: "success" | "warning" | "danger"; desc: string } => {
+  if (score >= 70) return { label: "Attribution automatique", variant: "success", desc: "Score ≥ 70 — Attribution automatique possible" };
+  if (score >= 40) return { label: "Confirmation requise", variant: "warning", desc: "Score 40-69 — Attribution probable, confirmation manuelle requise" };
+  return { label: "Arbitrage nécessaire", variant: "danger", desc: "Score < 40 — Litige probable, arbitrage nécessaire" };
 };
 
 const IntroductionDetail = () => {
@@ -43,6 +52,7 @@ const IntroductionDetail = () => {
   const { toast } = useToast();
   const [intro, setIntro] = useState<any>(null);
   const [preuves, setPreuves] = useState<any[]>([]);
+  const [auditLog, setAuditLog] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [rejectionReason, setRejectionReason] = useState("");
@@ -64,8 +74,17 @@ const IntroductionDetail = () => {
       .eq("introduction_id", id)
       .order("created_at", { ascending: false });
 
+    // Fetch audit trail for this introduction — CDC §5.6
+    const { data: auditData } = await supabase
+      .from("audit_log")
+      .select("*")
+      .eq("entity_id", id)
+      .order("created_at", { ascending: false })
+      .limit(20);
+
     setIntro(introData);
     setPreuves(preuvesData || []);
+    setAuditLog(auditData || []);
     if (introData) {
       setEConfirmed(introData.entreprise_confirmed || false);
       setFConfirmed(introData.facilitateur_confirmed || false);
@@ -75,11 +94,18 @@ const IntroductionDetail = () => {
 
   useEffect(() => { fetchData(); }, [id]);
 
+  /* Calculate proof score — CDC §7 */
+  const proofScore = preuves.reduce((acc, p) => {
+    const level = levelConfig[p.level];
+    return acc + (level ? level.points : (p.points || 0));
+  }, 0);
+
+  const scoreInfo = getScoreLabel(proofScore);
+
   const transition = async (newStatus: string) => {
     if (!user || !id) return;
     setActionLoading(true);
     try {
-      // Update confirmations if needed
       if (newStatus === "won") {
         await supabase.from("introductions").update({
           entreprise_confirmed: eConfirmed,
@@ -105,7 +131,7 @@ const IntroductionDetail = () => {
       } else {
         toast({ title: "Statut mis à jour", description: `Introduction passée en "${statusLabels[newStatus]}"` });
 
-        // Auto-create commission on WON
+        // CDC §2.5 — Auto-create commission on WON (2% capped at 500€)
         if (newStatus === "won" && intro?.deal_amount && intro.deal_amount > 5000) {
           const commission = Math.min(intro.deal_amount * 0.02, 500);
           await supabase.from("commissions").insert({
@@ -151,29 +177,59 @@ const IntroductionDetail = () => {
           </div>
 
           <div className="grid md:grid-cols-2 gap-8">
+            {/* Timeline */}
             <div>
               <h2 className="text-lg font-bold text-foreground mb-4">Chronologie</h2>
               <TitanTimeline steps={timeline} />
             </div>
 
+            {/* Preuves — CDC §7 */}
             <div>
-              <h2 className="text-lg font-bold text-foreground mb-4">Preuves ({preuves.length})</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-foreground">Preuves ({preuves.length})</h2>
+                {/* CDC §7 — Score de preuve avec seuils */}
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-black text-accent">{proofScore} pts</span>
+                  <TitanBadge variant={scoreInfo.variant}>{scoreInfo.label}</TitanBadge>
+                </div>
+              </div>
+
+              {/* Score threshold explanation — CDC §7 */}
+              <div className="bg-muted/50 rounded-lg p-3 mb-4">
+                <p className="text-xs text-muted-foreground">{scoreInfo.desc}</p>
+              </div>
+
               <div className="space-y-3 mb-4">
                 {preuves.map((p) => (
                   <TitanCard key={p.id} variant="outlined" padding="p-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <FileCheck className="h-5 w-5 text-accent" />
+                        {p.level === "suspecte" ? (
+                          <AlertTriangle className="h-5 w-5 text-destructive" />
+                        ) : (
+                          <FileCheck className="h-5 w-5 text-accent" />
+                        )}
                         <div>
                           <p className="text-sm font-medium text-foreground">{p.type.replace(/_/g, " ")}</p>
                           <p className="text-xs text-muted-foreground">{new Date(p.created_at).toLocaleDateString("fr-FR")}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <TitanBadge variant={levelConfig[p.level]?.variant || "info"}>{p.level}</TitanBadge>
-                        <span className="text-sm font-bold text-accent">+{p.points} pts</span>
+                        <TitanBadge variant={levelConfig[p.level]?.variant || "info"}>
+                          {levelConfig[p.level]?.label || p.level}
+                        </TitanBadge>
+                        <span className={`text-sm font-bold ${p.level === "suspecte" ? "text-destructive" : "text-accent"}`}>
+                          {levelConfig[p.level]?.points > 0 ? "+" : ""}{levelConfig[p.level]?.points || p.points} pts
+                        </span>
                       </div>
                     </div>
+                    {/* CDC §5.6 / §6.5 — SHA-256 hash display */}
+                    {p.sha256_hash && (
+                      <div className="mt-2 flex items-center gap-1.5">
+                        <Hash className="h-3 w-3 text-muted-foreground" />
+                        <code className="text-[10px] text-muted-foreground font-mono break-all">{p.sha256_hash}</code>
+                      </div>
+                    )}
                   </TitanCard>
                 ))}
               </div>
@@ -181,7 +237,7 @@ const IntroductionDetail = () => {
             </div>
           </div>
 
-          {/* Actions */}
+          {/* Actions — CDC §5 State Machine */}
           <TitanCard variant="outlined">
             <h3 className="text-lg font-bold text-foreground mb-4">Actions</h3>
 
@@ -206,7 +262,7 @@ const IntroductionDetail = () => {
               )}
             </div>
 
-            {/* Double confirmation for WON */}
+            {/* Double confirmation for WON — CDC §5.4 */}
             {intro.status === "meeting_scheduled" && (
               <div className="border-t border-border pt-4">
                 <h4 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
@@ -231,6 +287,34 @@ const IntroductionDetail = () => {
                   Confirmer Deal Gagné
                 </TitanButton>
               </div>
+            )}
+          </TitanCard>
+
+          {/* Audit Trail — CDC §5.6 SHA-256 */}
+          <TitanCard variant="outlined">
+            <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+              <Shield className="h-5 w-5 text-accent" /> Audit Trail SHA-256
+            </h3>
+            <p className="text-xs text-muted-foreground mb-4">Chaque action est horodatée et hashée. Opposable en litige.</p>
+            {auditLog.length > 0 ? (
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {auditLog.map((log) => (
+                  <div key={log.id} className="flex items-start gap-3 py-2 border-b border-border last:border-0">
+                    <div className="w-2 h-2 rounded-full bg-accent mt-1.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-foreground">{log.action}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleString("fr-FR")}</p>
+                      {log.sha256_hash && (
+                        <code className="text-[10px] text-muted-foreground font-mono break-all block mt-0.5">
+                          SHA-256: {log.sha256_hash}
+                        </code>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">Audit trail en cours de génération...</p>
             )}
           </TitanCard>
         </div>
