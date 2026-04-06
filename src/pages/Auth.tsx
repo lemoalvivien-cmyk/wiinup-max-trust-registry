@@ -7,6 +7,7 @@ import TitanCard from "@/components/titan/TitanCard";
 import TitanFooter from "@/components/titan/TitanFooter";
 import { Building2, Users, Mail, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -19,6 +20,7 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { redirectToCheckout } = useStripeCheckout();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,34 +38,12 @@ const Auth = () => {
         if (error) throw error;
 
         if (role === "entreprise") {
-          // Appel checkout Stripe externe pour les entreprises
-          const session = signUpData.session;
-          const checkoutBody = {
+          // Entreprise → Stripe checkout via hook
+          await redirectToCheckout({
             priceId: "price_1TISUWEG497aCUFxCf50zKPZ",
-            successUrl: window.location.origin + "/dashboard",
-            cancelUrl: window.location.origin + "/auth",
-          };
-          const res = await fetch(
-            "https://rnkkktytsxxtzaigafuc.supabase.co/functions/v1/create-checkout-session",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                ...(session?.access_token
-                  ? { Authorization: `Bearer ${session.access_token}` }
-                  : {}),
-              },
-              body: JSON.stringify(checkoutBody),
-            }
-          );
-          const result = await res.json();
-          if (result?.url) {
-            window.location.href = result.url;
-            return;
-          } else {
-            toast({ title: "Inscription réussie", description: "Redirection vers le paiement impossible. Rendez-vous sur /pricing.", variant: "destructive" });
-            navigate("/pricing");
-          }
+            email,
+          });
+          return;
         } else {
           // Facilitateur → gratuit, accès direct au dashboard
           toast({ title: "Bienvenue !", description: "Votre compte facilitateur est prêt." });
