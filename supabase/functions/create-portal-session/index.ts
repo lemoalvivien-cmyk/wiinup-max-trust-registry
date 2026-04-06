@@ -13,10 +13,11 @@ serve(async (req) => {
   try {
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
     );
 
-    const authHeader = req.headers.get("Authorization")!;
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) throw new Error("Not authenticated");
     const token = authHeader.replace("Bearer ", "");
     const { data: { user } } = await supabaseClient.auth.getUser(token);
     if (!user) throw new Error("Not authenticated");
@@ -29,7 +30,9 @@ serve(async (req) => {
 
     if (!profile?.stripe_customer_id) throw new Error("No subscription found");
 
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") ?? "", { apiVersion: "2023-10-16" });
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) throw new Error("Stripe not configured");
+    const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     const origin = req.headers.get("origin") || "https://wiinup.fr";
 
     const session = await stripe.billingPortal.sessions.create({
