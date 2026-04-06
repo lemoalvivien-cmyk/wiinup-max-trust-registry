@@ -232,21 +232,6 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* GARANTIE NUCLÉAIRE */}
-      <section className="py-20 px-4">
-        <div className="max-w-2xl mx-auto">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} custom={0} variants={fadeUp}>
-            <TitanCard className="titan-gradient-gold text-center">
-              <Shield className="h-12 w-12 text-primary mx-auto mb-4" />
-              <h2 className="text-2xl font-black text-primary mb-3">Garantie Nucléaire</h2>
-              <p className="text-primary/80 text-lg">
-                Si aucun facilitateur ne couvre votre secteur en 90 jours, <strong className="text-primary">remboursement intégral</strong>. Zéro risque.
-              </p>
-            </TitanCard>
-          </motion.div>
-        </div>
-      </section>
-
       {/* CTA FINAL */}
       <section className="py-20 px-4 titan-gradient-orange">
         <div className="max-w-3xl mx-auto text-center">
