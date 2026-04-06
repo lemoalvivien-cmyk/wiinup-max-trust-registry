@@ -43,11 +43,24 @@ const TitanProofUpload: React.FC<TitanProofUploadProps> = ({ introductionId, onU
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
 
+  const ALLOWED_TYPES = ["image/jpeg", "image/png", "application/pdf"];
+  const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+
+  const validateFile = (f: File): string | null => {
+    if (!ALLOWED_TYPES.includes(f.type)) return "Type non accepté. Seuls JPEG, PNG et PDF sont autorisés.";
+    if (f.size > MAX_SIZE) return "Fichier trop volumineux (max 5 MB).";
+    return null;
+  };
+
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
     const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile) setFile(droppedFile);
+    if (droppedFile) {
+      const err = validateFile(droppedFile);
+      if (err) { alert(err); return; }
+      setFile(droppedFile);
+    }
   }, []);
 
   const handleUpload = async () => {
