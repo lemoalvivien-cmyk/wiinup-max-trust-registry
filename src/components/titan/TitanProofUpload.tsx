@@ -134,8 +134,12 @@ const TitanProofUpload: React.FC<TitanProofUploadProps> = ({ introductionId, onU
           id="proof-file-input"
           type="file"
           className="hidden"
-          accept="image/*,.pdf"
-          onChange={(e) => setFile(e.target.files?.[0] || null)}
+          accept="image/jpeg,image/png,application/pdf"
+          onChange={(e) => {
+            const f = e.target.files?.[0] || null;
+            if (f) { const err = validateFile(f); if (err) { alert(err); return; } }
+            setFile(f);
+          }}
         />
         {file ? (
           <div className="flex items-center justify-center gap-2">
