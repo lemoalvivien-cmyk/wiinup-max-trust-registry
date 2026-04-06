@@ -1,3 +1,3 @@
-# Welcome to your Lovable project
+# WIINUP
 
-TODO: Document your project here
+Registre de confiance transactionnelle B2B. Chaque deal est prouvé, tracé et rémunéré.
