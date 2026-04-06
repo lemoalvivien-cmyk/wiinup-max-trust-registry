@@ -7,6 +7,7 @@ import TitanCard from "@/components/titan/TitanCard";
 import TitanFooter from "@/components/titan/TitanFooter";
 import { Building2, Users, Mail, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useStripeCheckout } from "@/hooks/useStripeCheckout";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
