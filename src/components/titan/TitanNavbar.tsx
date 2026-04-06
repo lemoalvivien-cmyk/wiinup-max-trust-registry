@@ -30,7 +30,7 @@ const TitanNavbar: React.FC<TitanNavbarProps> = ({ userRole = "entreprise", onLo
           <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
             <span className="text-accent-foreground font-bold text-sm">W</span>
           </div>
-          <span className="text-lg font-bold text-sidebar-foreground">WIINUP MAX</span>
+          <span className="text-lg font-bold text-sidebar-foreground">WIINUP</span>
         </Link>
       </div>
       <nav className="flex-1 px-3 space-y-1">
@@ -78,7 +78,7 @@ const TitanNavbar: React.FC<TitanNavbarProps> = ({ userRole = "entreprise", onLo
           <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center">
             <span className="text-accent-foreground font-bold text-xs">W</span>
           </div>
-          <span className="text-base font-bold text-sidebar-foreground">WIINUP MAX</span>
+          <span className="text-base font-bold text-sidebar-foreground">WIINUP</span>
         </Link>
         <button onClick={() => setMobileOpen(!mobileOpen)} className="text-sidebar-foreground">
           {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}

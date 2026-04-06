@@ -90,7 +90,7 @@ const Pricing = () => {
             <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
               <span className="text-accent-foreground font-bold text-sm">W</span>
             </div>
-            <span className="text-lg font-bold text-foreground">WIINUP MAX</span>
+            <span className="text-lg font-bold text-foreground">WIINUP</span>
           </Link>
           <Link to="/auth"><TitanButton variant="ghost" size="sm">Connexion</TitanButton></Link>
         </div>

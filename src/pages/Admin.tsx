@@ -100,7 +100,7 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <SEOHead title="Admin — WIINUP MAX" description="Revenue Ops admin panel" />
+      <SEOHead title="Admin — WIINUP" description="Revenue Ops admin panel" />
       <TitanNavbar userRole="admin" onLogout={async () => { await supabase.auth.signOut(); navigate("/"); }} />
       <main className="lg:pl-60 pt-14 lg:pt-0">
         <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">

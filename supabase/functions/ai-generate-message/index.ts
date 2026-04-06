@@ -53,7 +53,7 @@ serve(async (req) => {
 
 Suite à ${signalText} chez ${companyName}, je me permets de vous contacter car nos services pourraient accompagner votre développement.
 
-Notre plateforme WIINUP MAX connecte les entreprises avec des facilitateurs qualifiés dans votre secteur, garantissant des introductions traçables et des deals prouvés.
+Notre plateforme WIINUP connecte les entreprises avec des facilitateurs qualifiés dans votre secteur, garantissant des introductions traçables et des deals prouvés.
 
 Seriez-vous disponible pour un échange de 15 minutes cette semaine ?
 
