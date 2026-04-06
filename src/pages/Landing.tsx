@@ -1,6 +1,7 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 import { Zap, Shield, Clock, CheckCircle, Star, ArrowRight, Users, Bot, FileCheck } from "lucide-react";
 import TitanButton from "@/components/titan/TitanButton";
 import TitanCard from "@/components/titan/TitanCard";
@@ -13,6 +14,29 @@ const fadeUp = {
 };
 
 const Landing = () => {
+  const navigate = useNavigate();
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+  const handleCheckout = async () => {
+    setCheckoutLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate("/auth?role=entreprise");
+        return;
+      }
+      const { data, error } = await supabase.functions.invoke("create-checkout-session", {
+        body: { plan: "starter" },
+      });
+      if (error) throw error;
+      if (data?.url) window.location.href = data.url;
+    } catch {
+      navigate("/auth?role=entreprise");
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Topbar */}
@@ -46,7 +70,7 @@ const Landing = () => {
             Le registre de confiance transactionnelle B2B. Chaque deal est prouvé, tracé et rémunéré. Fini les introductions oubliées.
           </motion.p>
           <motion.div initial="hidden" animate="visible" custom={2} variants={fadeUp} className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/auth?role=entreprise"><TitanButton size="lg" icon={<Zap className="h-5 w-5" />}>Démarrer à 99 €/an</TitanButton></Link>
+            <TitanButton size="lg" icon={<Zap className="h-5 w-5" />} loading={checkoutLoading} onClick={handleCheckout}>Démarrer à 99 €/an</TitanButton>
             <Link to="/auth?role=facilitateur"><TitanButton variant="ghost" size="lg">Devenir facilitateur — c'est gratuit</TitanButton></Link>
           </motion.div>
         </div>
