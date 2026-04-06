@@ -7,6 +7,7 @@ import TitanButton from "@/components/titan/TitanButton";
 import TitanCard from "@/components/titan/TitanCard";
 import TitanBadge from "@/components/titan/TitanBadge";
 import TitanFooter from "@/components/titan/TitanFooter";
+import SEOHead from "@/components/SEOHead";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
